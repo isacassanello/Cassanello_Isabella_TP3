@@ -1,5 +1,7 @@
 import numpy as np
-from activations import relu, softmax
+import pandas as pd
+from activations import relu, relu_derivada, softmax
+from metrics import cross_entropy
 
 class MLP:
     def __init__(self, layers, random_state=42, kappa=0.01):
@@ -11,15 +13,15 @@ class MLP:
         self.biases = []
 
         # inicializacion de pesos y biases
-        for neurona in range(self.num_layers):
-            input_size = layers[neurona]
-            output_size = layers[neurona + 1]
+        for layer in range(self.num_layers):
+            n_input = layers[layer]
+            n_output = layers[layer + 1]
 
             # inicialización He para los pesos
-            W = np.random.normal(loc=0, scale=np.sqrt(2 / input_size), size=(input_size, output_size))
+            W = np.random.normal(loc=0, scale=np.sqrt(2 / n_input), size=(n_input, n_output))
 
             # biases pequeños y positivos
-            b = np.random.uniform(0, kappa**2, size=(1, output_size))
+            b = np.random.uniform(0, kappa**2, size=(1, n_output))
 
             self.weights.append(W)
             self.biases.append(b)
@@ -33,8 +35,8 @@ class MLP:
         Z = X
 
         # capas ocultas
-        for neurona in range(self.num_layers - 1):
-            A = Z @ self.weights[neurona] + self.biases[neurona]
+        for layer in range(self.num_layers - 1):
+            A = Z @ self.weights[layer] + self.biases[layer]
             Z = relu(A)
 
             self.pre_activaciones.append(A)
@@ -48,5 +50,77 @@ class MLP:
         self.activaciones.append(Y_hat)   
 
         return Y_hat 
+    
+    def backward(self, y_true):
+        """ Calcula los gradientes usando backpropagation """
+        N = y_true.shape[0]
 
+        self.dW = [None] * self.num_layers
+        self.db = [None] * self.num_layers
+
+        # gradiente de la capa de salida
+        dA = self.activaciones[-1] - y_true
+
+        for layer in reversed(range(self.num_layers)):
+            # gradiente de los pesos
+            z_anterior = self.activaciones[layer]
+            self.dW[layer] = (z_anterior.T @ dA) / N
+
+            # gradiente de los biases
+            self.db[layer] = np.sum(dA, axis=0, keepdims=True) / N
+
+            # propago hacia atras si no llegue a la primera capa
+            if layer > 0:
+                dZ_anterior = dA @ self.weights[layer].T
+                pre_act_anterior = self.pre_activaciones[layer - 1]
+                dA = dZ_anterior * relu_derivada(pre_act_anterior)
+
+    def update_params(self, learning_rate):
+        """ Actualiza pesos y biases usando gradiente descendente """
+        for layer in range(self.num_layers):
+            self.weights[layer] -= learning_rate * self.dW[layer]
+            self.biases[layer] -= learning_rate * self.db[layer]
+
+    def fit(self, X_train, y_train, X_val=None, y_val=None, epochs=100, learning_rate=0.01):
+        """
+        Entrena la red usando descenso por gradiente estándar
+
+        En cada época:
+        1. Forward propagation
+        2. Cálculo de la loss
+        3. Backpropagation
+        4. Actualización de pesos y biases
+        """
+
+        historial = []
+
+        for epoch in range(epochs):
+            # 1. forward en train
+            y_pred_train = self.forward(X_train)
+
+            # 2. loss de train
+            train_loss = cross_entropy(y_train, y_pred_train)
+
+            # 3. backpropagation
+            self.backward(y_train)
+
+            # 4. actualizar los parametros
+            self.update_params(learning_rate)
+
+            # loss de validación
+            if X_val is not None and y_val is not None:
+                y_pred_val = self.forward(X_val)
+                val_loss = cross_entropy(y_val, y_pred_val)
+            else:
+                val_loss = None
+
+            historial.append({
+                "epoch": epoch,
+                "train_loss": train_loss,
+                "val_loss": val_loss
+            })
+
+        historial_df = pd.DataFrame(historial)
+
+        return historial_df
 

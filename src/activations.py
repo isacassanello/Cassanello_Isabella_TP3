@@ -8,9 +8,7 @@ def relu_derivada(x):
     return (x > 0).astype(float)
 
 def softmax(x):
-    """
-    Función softmax aplicada por filas
-    """
+    """ Función softmax aplicada por filas """
     # Estabilidad numérica
     x_shifted = x - np.max(x, axis=1, keepdims=True)
     exp_values = np.exp(x_shifted)
