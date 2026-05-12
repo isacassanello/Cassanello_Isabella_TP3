@@ -18,10 +18,10 @@ class MLP:
             n_output = layers[layer + 1]
 
             # inicialización He para los pesos
-            W = np.random.normal(loc=0, scale=np.sqrt(2 / n_input), size=(n_input, n_output))
+            W = np.random.normal(loc=0, scale=np.sqrt(2 / n_input), size=(n_input, n_output)).astype(np.float32)
 
             # biases pequeños y positivos
-            b = np.random.uniform(0, kappa**2, size=(1, n_output))
+            b = np.random.uniform(0, kappa**2, size=(1, n_output)).astype(np.float32)
 
             self.weights.append(W)
             self.biases.append(b)
@@ -75,13 +75,28 @@ class MLP:
                 pre_act_anterior = self.pre_activaciones[layer - 1]
                 dA = dZ_anterior * relu_derivada(pre_act_anterior)
 
-    def update_params(self, learning_rate):
+    def update_params_sgd(self, learning_rate):
         """ Actualiza pesos y biases usando gradiente descendente """
         for layer in range(self.num_layers):
             self.weights[layer] -= learning_rate * self.dW[layer]
             self.biases[layer] -= learning_rate * self.db[layer]
 
-    def fit(self, X_train, y_train, X_val=None, y_val=None, epochs=100, learning_rate=0.01):
+    def calcular_lr(self, epoch, lr_inicial, schedule=None, lr_final=0.0001, k=50, c=0.70, s=1):
+        if schedule is None:
+            return lr_inicial
+        
+        elif schedule=="linear":
+            if epoch >= k:
+                lr = lr_final
+            else:
+                lr = (1 - epoch/k) * lr_inicial + (epoch/k) * lr_final
+            return lr
+        
+        elif schedule=="exponential":
+            lr = lr_inicial * (c ** (epoch/s))
+            return lr
+
+    def fit(self, X_train, y_train, X_val=None, y_val=None, epochs=100, learning_rate=0.1):
         """
         Entrena la red usando descenso por gradiente estándar
 
@@ -91,7 +106,6 @@ class MLP:
         3. Backpropagation
         4. Actualización de pesos y biases
         """
-
         historial = []
 
         for epoch in range(epochs):
@@ -105,7 +119,7 @@ class MLP:
             self.backward(y_train)
 
             # 4. actualizar los parametros
-            self.update_params(learning_rate)
+            self.update_params_sgd(learning_rate)
 
             # loss de validación
             if X_val is not None and y_val is not None:
@@ -123,4 +137,3 @@ class MLP:
         historial_df = pd.DataFrame(historial)
 
         return historial_df
-

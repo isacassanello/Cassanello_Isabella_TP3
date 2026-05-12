@@ -5,7 +5,7 @@ def relu(x):
     return np.maximum(0, x)
 
 def relu_derivada(x):
-    return (x > 0).astype(float)
+    return (x > 0).astype(np.float32)
 
 def softmax(x):
     """ Función softmax aplicada por filas """

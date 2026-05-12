@@ -1,3 +1,4 @@
+import numpy as np
 import matplotlib.pyplot as plt
 
 def visualizar_imagenes(X_images, y_images, cantidad=3):
@@ -25,18 +26,39 @@ def visualizar_imagenes(X_images, y_images, cantidad=3):
     plt.tight_layout()
     plt.show()
 
-def graficar_loss(historial):
+def graficar_distribucion_clases(y_images):
     """
-    Grafica la evolución de la cross-entropy en train y validation
+    Grafica la cantidad de ejemplos por clase para analizar
+    si el dataset está balanceado o desbalanceado.
+    """
+    clases, conteos = np.unique(y_images, return_counts=True)
+
+    plt.figure(figsize=(14, 5))
+
+    plt.bar(clases, conteos, color="#8ecae6")
+
+    plt.xlabel("Clase")
+    plt.ylabel("Cantidad de imágenes")
+    plt.title("Distribución de clases en el dataset EMNIST ByMerge")
+
+    plt.xticks(clases)
+    plt.grid(axis="y", linestyle="--", alpha=0.3)
+
+    plt.tight_layout()
+    plt.show()
+
+def graficar_funcion_costo(historial):
+    """
+    Grafica la evolución de la función de costo en train y validation.
     """
 
     plt.figure(figsize=(8, 5))
 
-    plt.plot(historial["epoch"], historial["train_loss"], label="Train")
-    plt.plot(historial["epoch"], historial["val_loss"], label="Validation")
+    plt.plot(historial["epoch"], historial["train_loss"], label="Entrenamiento")
+    plt.plot(historial["epoch"], historial["val_loss"], label="Validación")
 
     plt.xlabel("Época")
-    plt.ylabel("Cross-Entropy")
+    plt.ylabel("Función de costo (cross-entropy)")
     plt.title("Evolución de la función de costo")
     plt.legend()
     plt.grid(True)
@@ -50,7 +72,7 @@ def graficar_matrices_confusion(matriz_train, matriz_val):
     titulos = ["Matriz de Confusión - Train", "Matriz de Confusión - Validation"]
 
     for ax, matriz, titulo in zip(axes, matrices, titulos):
-        im = ax.imshow(matriz)
+        im = ax.imshow(matriz, cmap="Greens")
 
         ax.set_title(titulo)
         ax.set_xlabel("Clase predicha")
