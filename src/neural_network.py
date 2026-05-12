@@ -95,6 +95,12 @@ class MLP:
         elif schedule=="exponential":
             lr = lr_inicial * (c ** (epoch/s))
             return lr
+        
+    def adam(self, epoch, B1=0.9, B2=0.99):
+        
+        return 0
+    def update_params_adam(self, learning_rate):
+        return 0
 
     def fit(self, X_train, y_train, X_val=None, y_val=None, epochs=100, learning_rate=0.1):
         """
@@ -137,3 +143,5 @@ class MLP:
         historial_df = pd.DataFrame(historial)
 
         return historial_df
+    
+
