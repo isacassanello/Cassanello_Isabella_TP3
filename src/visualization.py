@@ -74,11 +74,95 @@ def graficar_matrices_confusion(matriz_train, matriz_val):
     for ax, matriz, titulo in zip(axes, matrices, titulos):
         im = ax.imshow(matriz, cmap="Greens")
 
+        n_clases = matriz.shape[0]
+
         ax.set_title(titulo)
         ax.set_xlabel("Clase predicha")
         ax.set_ylabel("Clase real")
 
+        ax.set_xticks(np.arange(n_clases))
+        ax.set_yticks(np.arange(n_clases))
+
+        ax.set_xticklabels(np.arange(n_clases), rotation=90, fontsize=7)
+        ax.set_yticklabels(np.arange(n_clases), fontsize=7)
+
         fig.colorbar(im, ax=ax)
+
+    plt.tight_layout()
+    plt.show()
+
+def graficar_comparacion_modelos(tabla_comparacion):
+    """
+    Grafica comparación de modelos según:
+    - Accuracy
+    - F1 Macro
+    - Cross-Entropy
+    - Tiempo de entrenamiento
+    """
+
+    metricas = ["Accuracy", "F1 Macro", "Cross-Entropy", "Tiempo entrenamiento (seg)"]
+    titulos = ["Comparación de Accuracy", "Comparación de F1 Macro", "Comparación de Cross-Entropy", "Comparación de Tiempo de Entrenamiento"]
+    colores = ["#8ecae6", "#e5bdfe", "#fedd89", "#d481be"   ]
+
+    modelos = tabla_comparacion["Modelo"]
+
+    for metrica, titulo, color in zip(metricas, titulos, colores):
+
+        plt.figure(figsize=(10, 5))
+
+        plt.bar(modelos, tabla_comparacion[metrica], color=color, alpha=0.85)
+
+        plt.title(titulo)
+        plt.xlabel("Modelo")
+        plt.ylabel(metrica)
+
+        plt.xticks(rotation=45, ha="right")
+
+        for i, valor in enumerate(tabla_comparacion[metrica]):
+            plt.text(i, valor, f"{valor:.4f}", ha="center", va="bottom", fontsize=8)
+
+        plt.tight_layout()
+        plt.show()
+
+def graficar_matrices_confusion_modelos(matrices, nombres_modelos):
+    """
+    Grafica en subplots las matrices de confusión de los modelos con mejoras
+
+    Parámetros:
+    - matrices: lista de matrices de confusión
+    - nombres_modelos: lista con el nombre de cada modelo
+    - columnas: cantidad de columnas del subplot
+    """
+
+    cantidad = len(matrices)
+    filas = int(np.ceil(cantidad / 3))
+
+    fig, axes = plt.subplots(filas, 3, figsize=(6 * 3, 5 * filas))
+
+    axes = np.array(axes).reshape(-1)
+
+    for i, (matriz, nombre) in enumerate(zip(matrices, nombres_modelos)):
+        ax = axes[i]
+
+        im = ax.imshow(matriz, cmap="Greens")
+
+        n_clases = matriz.shape[0]
+        ticks = np.arange(0, n_clases, 2)
+
+        ax.set_title(f"Matriz de Confusión - {nombre}")
+        ax.set_xlabel("Clase predicha")
+        ax.set_ylabel("Clase real")
+
+        ax.set_xticks(ticks)
+        ax.set_yticks(ticks)
+
+        ax.set_xticklabels(ticks, rotation=90, fontsize=7)
+        ax.set_yticklabels(ticks, fontsize=7)
+
+        fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
+
+    for j in range(cantidad, len(axes)):
+        axes[j].axis("off")
 
     plt.tight_layout()
     plt.show()

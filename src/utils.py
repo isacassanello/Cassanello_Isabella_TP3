@@ -1,5 +1,4 @@
 import time
-import pandas as pd
 from metrics import evaluar_modelo
 
 def entrenar_y_evaluar_modelo(nombre, modelo, X_tr, y_tr_onehot, X_val, y_val, y_val_onehot, parametros_fit, num_classes=47):
