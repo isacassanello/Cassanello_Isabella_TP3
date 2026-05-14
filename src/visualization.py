@@ -102,11 +102,17 @@ def graficar_comparacion_modelos(tabla_comparacion):
 
     metricas = ["Accuracy", "F1 Macro", "Cross-Entropy", "Tiempo entrenamiento (seg)"]
     titulos = ["Comparación de Accuracy", "Comparación de F1 Macro", "Comparación de Cross-Entropy", "Comparación de Tiempo de Entrenamiento"]
-    colores = ["#8ecae6", "#e5bdfe", "#fedd89", "#d481be"   ]
+    colores = ["#8ecae6", "#e5bdfe", "#fedd89", "#d481be"]
 
-    modelos = tabla_comparacion["Modelo"]
+    metricas_disponibles = [
+        (metrica, titulo, color)
+        for metrica, titulo, color in zip(metricas, titulos, colores)
+        if metrica in tabla_comparacion.columns
+    ]
 
-    for metrica, titulo, color in zip(metricas, titulos, colores):
+    modelos = tabla_comparacion["Modelo"].astype(str)
+
+    for metrica, titulo, color in metricas_disponibles:
 
         plt.figure(figsize=(10, 5))
 

@@ -86,31 +86,3 @@ def f1_score_macro(y_true, y_pred, num_classes=None):
     """
     _, _, f1 = precision_recall_f1_por_clase(y_true, y_pred, num_classes)
     return np.mean(f1)
-
-def evaluar_modelo(modelo, X, y_true, y_true_onehot, nombre_conjunto, num_classes=47):
-    """
-    Evalúa un modelo ya entrenado.
-
-    Devuelve:
-    - accuracy
-    - cross-entropy
-    - matriz de confusión
-    - f1 macro
-    """
-
-    y_pred_proba = modelo.forward(X)
-    y_pred = np.argmax(y_pred_proba, axis=1)
-
-    acc = accuracy_score(y_true, y_pred)
-    ce = cross_entropy(y_true_onehot, y_pred_proba)
-    matriz = matriz_confusion(y_true, y_pred, num_classes)
-    f1_macro = f1_score_macro(y_true, y_pred, num_classes)
-
-    tabla = pd.DataFrame({
-        "Conjunto": [nombre_conjunto],
-        "Accuracy": [acc],
-        "Cross-Entropy": [ce],
-        "F1 Macro": [f1_macro]
-    })
-
-    return tabla, matriz
