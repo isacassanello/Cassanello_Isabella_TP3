@@ -172,3 +172,85 @@ def graficar_matrices_confusion_modelos(matrices, nombres_modelos):
 
     plt.tight_layout()
     plt.show()
+
+def graficar_robustez(tabla_robustez):
+    """
+    Grafica Accuracy, Cross-Entropy y F1 Macro frente a distintos niveles de ruido
+    en una única figura.
+    """
+
+    metricas = ["Accuracy", "Cross-Entropy", "F1 Macro"]
+    titulos = ["Accuracy frente a ruido", "Cross-Entropy frente a ruido", "F1 Macro frente a ruido",]
+
+    fig, axes = plt.subplots(1, 3, figsize=(18, 5))
+
+    for ax, metrica, titulo in zip(axes, metricas, titulos):
+        for modelo in tabla_robustez["Modelo"].unique():
+            datos_modelo = tabla_robustez[tabla_robustez["Modelo"] == modelo]
+            datos_modelo = datos_modelo.sort_values("Ruido sigma")
+
+            ax.plot(
+                datos_modelo["Ruido sigma"],
+                datos_modelo[metrica],
+                marker="o",
+                label=modelo,
+            )
+
+        ax.set_xlabel("Nivel de ruido (sigma)")
+        ax.set_ylabel(metrica)
+        ax.set_title(titulo)
+        ax.grid(True, alpha=0.3)
+
+    axes[-1].legend(loc="best")
+    plt.tight_layout()
+    plt.show()
+
+def graficar_robustez_metricas_juntas(tabla_robustez):
+    tabla = tabla_robustez.copy()
+
+    metricas = ["Accuracy", "F1 Macro", "Cross-Entropy"]
+
+    for modelo in tabla["Modelo"].unique():
+        datos_limpios = tabla[
+            (tabla["Modelo"] == modelo) & (tabla["Ruido sigma"] == 0.0)
+        ].iloc[0]
+
+        for metrica in metricas:
+            valor_limpio = datos_limpios[metrica]
+
+            if metrica == "Cross-Entropy":
+                tabla.loc[tabla["Modelo"] == modelo, f"Variación {metrica}"] = (
+                    tabla.loc[tabla["Modelo"] == modelo, metrica] - valor_limpio
+                )
+            else:
+                tabla.loc[tabla["Modelo"] == modelo, f"Variación {metrica}"] = (
+                    valor_limpio - tabla.loc[tabla["Modelo"] == modelo, metrica]
+                )
+
+    plt.figure(figsize=(11, 6))
+
+    estilos = {
+        "Accuracy": "-",
+        "F1 Macro": "--",
+        "Cross-Entropy": ":",
+    }
+
+    for modelo in tabla["Modelo"].unique():
+        datos_modelo = tabla[tabla["Modelo"] == modelo].sort_values("Ruido sigma")
+
+        for metrica in metricas:
+            plt.plot(
+                datos_modelo["Ruido sigma"],
+                datos_modelo[f"Variación {metrica}"],
+                linestyle=estilos[metrica],
+                marker="o",
+                label=f"{modelo} - {metrica}"
+            )
+
+    plt.xlabel("Nivel de ruido (sigma)")
+    plt.ylabel("Degradación respecto al test sin ruido")
+    plt.title("Robustez frente a ruido")
+    plt.grid(True, alpha=0.3)
+    plt.legend(bbox_to_anchor=(1.05, 1), loc="upper left")
+    plt.tight_layout()
+    plt.show()

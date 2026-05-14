@@ -88,3 +88,61 @@ def evaluar_modelo_pytorch(modelo, X, y_true, nombre_conjunto, num_classes=47, d
         tabla["Tiempo entrenamiento (seg)"] = tiempo_entrenamiento
 
     return tabla, matriz
+
+def perturbar_con_ruido_gaussiano(X, sigma, seed=42):
+    rng = np.random.default_rng(seed)
+    ruido = rng.normal(loc=0.0, scale=sigma, size=X.shape)
+    X_ruidoso = X + ruido
+    return np.clip(X_ruidoso, 0, 1)
+
+def evaluar_modelos_con_ruido(modelos_propios, modelos_pytorch, X_test, y_test, y_test_onehot, niveles_ruido, num_classes=47):
+    resultados = []
+
+    for sigma in niveles_ruido:
+        X_test_ruidoso = perturbar_con_ruido_gaussiano(X_test,sigma=sigma,seed=42)
+
+        for nombre, modelo in modelos_propios.items():
+            tabla, _ = evaluar_modelo(
+                modelo,
+                X_test_ruidoso,
+                y_test,
+                y_test_onehot,
+                nombre_conjunto=nombre,
+                num_classes=num_classes
+            )
+
+            tabla["Ruido sigma"] = sigma
+            resultados.append(tabla)
+
+        for nombre, modelo in modelos_pytorch.items():
+            tabla, _ = evaluar_modelo_pytorch(
+                modelo,
+                X_test_ruidoso,
+                y_test,
+                nombre_conjunto=nombre,
+                num_classes=num_classes
+            )
+
+            tabla["Ruido sigma"] = sigma
+            resultados.append(tabla)
+
+    return pd.concat(resultados, ignore_index=True)
+
+def agregar_caida_respecto_limpio(tabla_robustez):
+    tabla = tabla_robustez.copy()
+
+    limpias = tabla[tabla["Ruido sigma"] == 0.0][
+        ["Modelo", "Accuracy", "Cross-Entropy", "F1 Macro"]
+    ].rename(columns={
+        "Accuracy": "Accuracy limpio",
+        "Cross-Entropy": "Cross-Entropy limpio",
+        "F1 Macro": "F1 Macro limpio"
+    })
+
+    tabla = tabla.merge(limpias, on="Modelo", how="left")
+
+    tabla["Caida Accuracy"] = tabla["Accuracy limpio"] - tabla["Accuracy"]
+    tabla["Aumento Cross-Entropy"] = tabla["Cross-Entropy"] - tabla["Cross-Entropy limpio"]
+    tabla["Caida F1 Macro"] = tabla["F1 Macro limpio"] - tabla["F1 Macro"]
+
+    return tabla
